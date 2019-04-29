@@ -3,23 +3,23 @@
 import os
 
 import torch
+from path import Path
 
-from onmt.inputters.inputter import build_dataset_iter, \
-    load_old_vocab, old_style_vocab
+from onmt.inputters.inputter import (build_dataset_iter, load_old_vocab,
+                                     old_style_vocab)
 from onmt.model_builder import build_model
-from onmt.utils.optimizers import Optimizer
-from onmt.utils.misc import set_random_seed
-from onmt.trainer import build_trainer
 from onmt.models import build_model_saver
+from onmt.trainer import build_trainer
 from onmt.utils.logging import init_logger, logger
+from onmt.utils.misc import set_random_seed
+from onmt.utils.optimizers import Optimizer
 from onmt.utils.parse import ArgumentParser
 
 
 def _check_save_model_path(opt):
     save_model_path = os.path.abspath(opt.save_model)
     model_dirname = os.path.dirname(save_model_path)
-    if not os.path.exists(model_dirname):
-        os.makedirs(model_dirname)
+    Path(model_dirname).mkdir_p()
 
 
 def _tally_parameters(model):
@@ -49,8 +49,8 @@ def main(opt, device_id):
     # Load checkpoint if we resume from a previous training.
     if opt.train_from:
         logger.info('Loading checkpoint from %s' % opt.train_from)
-        checkpoint = torch.load(opt.train_from,
-                                map_location=lambda storage, loc: storage)
+        checkpoint = torch.load(
+            opt.train_from, map_location=lambda storage, loc: storage)
 
         model_opt = ArgumentParser.ckpt_model_opts(checkpoint["opt"])
         ArgumentParser.update_model_opts(model_opt)
@@ -99,8 +99,7 @@ def main(opt, device_id):
         opt, device_id, model, fields, optim, model_saver=model_saver)
 
     train_iter = build_dataset_iter("train", fields, opt)
-    valid_iter = build_dataset_iter(
-        "valid", fields, opt, is_train=False)
+    valid_iter = build_dataset_iter("valid", fields, opt, is_train=False)
 
     if len(opt.gpu_ranks):
         logger.info('Starting training on GPU: %s' % opt.gpu_ranks)
